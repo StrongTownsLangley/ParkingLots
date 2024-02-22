@@ -70,6 +70,11 @@ namespace pl
                 Console.WriteLine("Usage: pl.exe -min-longitude=* -min-latitude=* -max-longitude=* -max-latitude=* [output-folder=\"json\"]");
                 return;
             }
+
+            if (!Directory.Exists(outputFolder))
+            {
+                Directory.CreateDirectory(outputFolder);
+            }
             #endregion
 
             // Define the bounding box
