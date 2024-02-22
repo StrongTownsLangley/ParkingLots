@@ -22,7 +22,7 @@ Viewable maps are generated in the output folder:
 
 **NOTE: As the area is defined by a rectangle region, parking lots from outside your city may be included. In a future version it may be possible to specify a specific city or region instead of lat/long coords.**
 
-### Why is this useful and Why?
+### Why is this useful?
 Looking at a map of parking lots allows us to see where areas of valuable land are being essentially "wasted" on space for cars.
 
 Parking lots generate little economic activity and as such are discouraged by [Strong Towns](https://strongtowns.org) in favour of more productive land use.
