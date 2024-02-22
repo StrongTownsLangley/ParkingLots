@@ -13,7 +13,7 @@ You can download the tool from the releases page: https://github.com/StrongTowns
 This tool works best with good comprehensive open street map data, this varies from place to place and you can contribute to the project yourself if data is missing.
 
 ```
-Usage: pl.exe -min-longitude=* -min-latitude=* -max-longitude=* -max-latitude=* output-folder="json"
+Usage: pl.exe -min-longitude=* -min-latitude=* -max-longitude=* -max-latitude=* [output-folder="json"]
 ```
 
 Viewable maps are generated in the output folder:
