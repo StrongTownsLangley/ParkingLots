@@ -27,8 +27,8 @@ Looking at a map of parking lots allows us to see where areas of valuable land a
 
 Parking lots generate little economic activity and as such are discouraged by [Strong Towns](https://strongtowns.org) in favour of more productive land use.
 
-### How does this tool detect parking lots?
-The tool doesn't "detect" them but relies on user submitted and other generated data as part of the Open Street Map project. It uses the Overpass API to download OSM (Open Street Map) Data of specified region, and then searches for all parking lots, excluding roof-top and underground parking.
+### How does this tool know where parking lots are?
+The tool but relies on user submitted and other generated data as part of the Open Street Map project which includes parking lot areas. It uses the Overpass API to download OSM (Open Street Map) Data of specified region, and then searches for all parking lots, excluding roof-top and underground parking.
 
 In the OSM data, parking lots are defined as a "way" (which represents a collection of nodes which define the parking lot area) with the tag *amenity* defined as ***parking***:
 ```
