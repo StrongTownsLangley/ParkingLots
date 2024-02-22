@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Lot Overlay</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 100vh;
+        }
+    </style>
+</head>
+<!-- STRONG TOWNS LANGLEY PARKING LOT MAPPING TOOL -->
+<!-- Coded by: James Hansen (james@strongtownslangley.org) -->
+<!-- https://github.com/StrongTownsLangley/ParkingLots -->
+<!-- strongtownslangley.org -->
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([{AVGLAT}, {AVGLON}], 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            opacity: 0.5,
+        }).addTo(map);
+
+        // Load GeoJSON file
+ 
+        var pl = [];
+
+            var pl = L.geoJSON(null, {
+                style: function(feature) {
+                    return {
+                        fillColor: 'red',
+                        weight: 0,
+                        opacity: 1,
+                        color: 'white',
+                        fillOpacity: 1
+                    };
+                }
+            });
+
+
+        {DATALIST}
+
+        pl.addTo(map);
+        
+
+    </script>
+</body>
+</html>
