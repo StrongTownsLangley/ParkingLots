@@ -41,7 +41,7 @@ In the OSM data, parking lots are defined as a "way" (which represents a collect
  </way>
 ```
 
-Multipolygon Parking Lots (a large shapes with other shapes inside "cut out") are defined as a "relation" with the same tags:
+Multipolygon Parking Lots (a large shapes with other shapes inside "cut out") are defined as a "relation", which is a group of ways, the relation in this case has the tag *amenity* defined as ***parking*** instead of the child way elements:
 ```
  <relation id="200001" visible="true" version="2">
   <member type="way" ref="100001" role="outer"/>
