@@ -1,6 +1,7 @@
 # Parking Lot Mapping Tool
 This tool takes an area of the map specified as minimum and maximum longitudes and latitudes, downloads the map data from [Open Street Map](https://openstreetmap.org), and generates an interactive parking lot map based on that data.
-![parkinglot_map](https://github.com/StrongTownsLangley/ParkingLots/assets/160652425/b000c58a-0aa9-43aa-87bf-b91d4155ed00)
+![parkinglot_map](https://github.com/StrongTownsLangley/ParkingLots/assets/160652425/174c7db9-93fa-43a4-af8e-3ff3d369b399)
+
 
 ## Demo
 This tool was used to compile the map at https://strongtownslangley.org/maps?parking-map
