@@ -56,6 +56,12 @@ Multipolygon Parking Lots (a large shapes with other shapes inside "cut out") ar
 
 If the parking tag is set to *underground* or *rooftop* it is not included in the results.
 
+Private parking lots have the following tag:
+```
+  <tag k="access" v="private"/>
+```
+Public parking lots either have no access tag or the access tag set to "customers" or "public", but no distinction is made here on the map. Only "private" is recognized.
+
 ## Other Similar Projects
 - wordpipelines's Overpass Turbo script was used as a reference for this project: https://overpass-turbo.eu/s/1ddZ - thank you!
   
