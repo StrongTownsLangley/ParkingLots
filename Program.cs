@@ -24,7 +24,65 @@ namespace pl
         public static double minLatitude = 0;
         public static double maxLongitude = 0;
         public static double maxLatitude = 0;
-        public static string outputFolder = "json";        
+        public static string outputFolder = "json";
+
+        public static List<Relation> _allRelations;
+        public static List<Way> _allWays;
+        public static List<Node> _allNodes;
+
+
+        public enum ParkingLotType
+        {
+            None,
+            Public,
+            Private
+        }
+
+        public class WayWithNodes
+        {
+            public WayWithNodes(Way Way)
+            {
+                this.Way = Way;
+                if(Way.Nodes != null)
+                {
+                    var nodeIds = Way.Nodes.ToList();
+                    var nodes = _allNodes
+                        .Where(m => m.Id != null && nodeIds.Contains(m.Id.Value))
+                        .OrderBy(node => nodeIds.IndexOf(node.Id.Value)) // Preserve Order
+                        .ToList();
+                    this.PopulatedNodes = nodes;
+                } else {
+                    this.PopulatedNodes = new List<Node>();
+                }
+            }
+            public Way Way { get; set; }
+            public List<Node> PopulatedNodes { get; set; }
+        }
+
+        public class ParkingLot
+        {
+            public List<WayWithNodes> WaysWithNodes { get; set; }
+            public ParkingLotType ParkingLotType { get; set; }
+        }
+
+        public static ParkingLotType GetParkingType(OsmSharp.Tags.TagsCollectionBase tags)
+        {
+            if (tags == null)
+                return ParkingLotType.None;
+
+            if (tags.ContainsKey("amenity") && tags["amenity"] == "parking")
+            {
+                if (tags.ContainsKey("parking"))
+                    if (tags["parking"] == "underground" || tags["parking"] == "rooftop")
+                    {
+                        return ParkingLotType.None;
+                    }
+                if (tags.ContainsKey("access") && tags["access"] == "private")
+                    return ParkingLotType.Private;
+                return ParkingLotType.Public;
+            }
+            return ParkingLotType.None;
+        }
 
         static void Main(string[] args)
         {
@@ -103,38 +161,78 @@ namespace pl
             {
                 // Create an OsmReader
                 var osmStreamSource = new OsmSharp.Streams.XmlOsmStreamSource(stream);
+
+                Console.WriteLine("Reading All OSM Data Relations...");
+                _allRelations = osmStreamSource.Where(m => m.Type == OsmGeoType.Relation).Select(m => (Relation)m).ToList();
+
+                Console.WriteLine("Reading All OSM Data Ways...");
+                _allWays = osmStreamSource.Where(m => m.Type == OsmGeoType.Way).Select(m => (Way)m).ToList();
+
                 Console.WriteLine("Reading All OSM Data Nodes...");
-                List<Node> allNodes = osmStreamSource.Where(m => m.Type == OsmGeoType.Node).Select(m => (Node)m).ToList();
-                Console.WriteLine("Finding All Parking Lots...");
-                var parkingLots = new Dictionary<Way,List<Node>>();
-                int parkingLotCount = 0;
-                foreach (var entity in osmStreamSource)
+                _allNodes = osmStreamSource.Where(m => m.Type == OsmGeoType.Node).Select(m => (Node)m).ToList();
+
+                // Close Stream
+            }
+
+                Console.WriteLine("Finding Parking Lot Relations..."); // Some parking lots are multiple ways grouped as relations, with the relation having the parking info                
+                var relationParkingWayIds = new List<long>();
+                var parkingLots = new List<ParkingLot>();
+                foreach (Relation relation in _allRelations)
                 {
-                    if (entity.Type == OsmGeoType.Way) // Do not include Nodes, just Polygons
-                    {
-                        var parkingLotWay = (Way)entity;
+                        var parkingType = GetParkingType(relation.Tags);
+                        if(parkingType != ParkingLotType.None)
+                        {                            
+                            var waysWithNodes = new List<WayWithNodes>();
+                            foreach(var member in relation.Members)
+                            {
+                                if (member.Type == OsmGeoType.Way)
+                                {
+                                    var wayInRelation = _allWays.FirstOrDefault(m => m.Id == member.Id);
+                                    if (wayInRelation == null)
+                                        continue;
+                                    waysWithNodes.Add(new WayWithNodes(wayInRelation));
+                                    relationParkingWayIds.Add(member.Id);
+                                }
+                            }
+                            var parkingLot = new ParkingLot()
+                            {
+                                WaysWithNodes = waysWithNodes,
+                                ParkingLotType = parkingType
+                            };
 
-                        var tags = entity.Tags;
-                        if (tags == null)
-                            continue;
-                        if (tags.ContainsKey("amenity") && tags["amenity"] == "parking")
+                            parkingLots.Add(parkingLot);
+
+                        }                                    
+                }
+                Console.WriteLine("Finding Parking Ways...");
+
+
+                foreach (var way in _allWays)
+                {
+                        var tags = way.Tags;
+                        ParkingLotType parkingType = ParkingLotType.None;
+                        if (way.Id != null && relationParkingWayIds.Contains(way.Id.Value))
                         {
-                            if (tags.ContainsKey("parking"))
-                                if (tags["parking"] == "underground" || tags["parking"] == "rooftop")
-                                    continue; // Skip Underground and Rooftop Parking
-
-
-                            var nodeIds = parkingLotWay.Nodes.ToList();
-                            var parkingLotNodes = allNodes
-                                .Where(m => m.Id != null && nodeIds.Contains(m.Id.Value))
-                                .OrderBy(node => nodeIds.IndexOf(node.Id.Value)) // Preserve Order
-                                .ToList();
-
-                            parkingLots.Add(parkingLotWay, parkingLotNodes);
-                            parkingLotCount++;
+                            // Way already found as part of a relation
+                            continue;
                         }
-                    }
+                        else
+                        {
+                            // Way not as part of relation
+                            parkingType = GetParkingType(tags);
 
+                            if (parkingType != ParkingLotType.None)
+                            {
+                                var parkingLot = new ParkingLot()
+                                {
+                                    WaysWithNodes = new List<WayWithNodes>() { new WayWithNodes(way) },
+                                    ParkingLotType = parkingType
+                                };
+
+                                parkingLots.Add(parkingLot);
+
+                            }
+                        }
                 }
                 Console.WriteLine(parkingLots.Count() + " surface parking lots found.");
 
@@ -145,53 +243,91 @@ namespace pl
             // Output the identified parking lots
      
             // Configure JSON serialization settings
-            var settings = new JsonSerializerSettings
+            var geoJsonPublicLots = new
             {
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                type = "FeatureCollection",
+                features = new List<object>(),
+                info = new List<object>()
             };
-
-            var geoJson = new
+            var geoJsonPrivateLots = new
             {
                 type = "FeatureCollection",
                 features = new List<object>(),
                 info = new List<object>()
             };
 
-
-            int featureCount = 0;
+            
             foreach (var parkingLot in parkingLots)
             {
-                var parkingLotWay = parkingLot.Key;
-                var parkingLotNodes = parkingLot.Value;
-
-                var parkingLotPoints = new List<double[]>();
-                foreach (Node node in parkingLotNodes)
+                if(parkingLot.WaysWithNodes.Count() == 1)
                 {
-                    double[] point = { node.Longitude ?? 0, node.Latitude ?? 0 };
-                    parkingLotPoints.Add(point);
-                }
+                    // Polygon
+                    var parkingLotWay = parkingLot.WaysWithNodes[0];                    
 
-                var feature = new
-                {
-                    type = "Feature",
-                    properties = new { },
-                    geometry = new
+                    var parkingLotPoints = new List<double[]>();
+                    foreach (Node node in parkingLotWay.PopulatedNodes)
                     {
-                        type = "Polygon",
-                        coordinates = new[]
-                        {
-                            parkingLotPoints.ToArray()
-                        }
+                        double[] point = { node.Longitude ?? 0, node.Latitude ?? 0 };
+                        parkingLotPoints.Add(point);
                     }
-                };
+
+                    var feature = new
+                    {
+                        type = "Feature",
+                        properties = new { },
+                        geometry = new
+                        {
+                            type = "Polygon",
+                            coordinates = new[]
+                            {
+                                parkingLotPoints.ToArray()
+                            }
+                        }
+                    };
                 
-                geoJson.features.Add(feature);                
+                    if(parkingLot.ParkingLotType == ParkingLotType.Public)
+                        geoJsonPublicLots.features.Add(feature);                
+                    else
+                        geoJsonPrivateLots.features.Add(feature);                
+                } else {
+                    // MultiPolygon
+                    var parkingLotPolygons = new List<List<double[]>>();
+                    foreach(var parkingLotWay in parkingLot.WaysWithNodes)
+                    {
+                        var parkingLotPoints = new List<double[]>();
+                        foreach (Node node in parkingLotWay.PopulatedNodes)
+                        {
+                            double[] point = { node.Longitude ?? 0, node.Latitude ?? 0 };
+                            parkingLotPoints.Add(point);
+                        }
+
+                        parkingLotPolygons.Add(parkingLotPoints);
+                    }
+                    var feature = new
+                    {
+                        type = "Feature",
+                        properties = new { },
+                        geometry = new
+                        {
+                            type = "MultiPolygon",
+                            coordinates = new[]
+                            {
+                                parkingLotPolygons.ToArray()
+                            }
+                        }
+                    };
+
+                    if (parkingLot.ParkingLotType == ParkingLotType.Public)
+                        geoJsonPublicLots.features.Add(feature);
+                    else
+                        geoJsonPrivateLots.features.Add(feature);       
+                }
             }
             
             // Write GeoJSON to file
-            Console.WriteLine("Writing JSON 'parkinglots.json' file...");
-            string geoJsonString = Newtonsoft.Json.JsonConvert.SerializeObject(geoJson);
-            File.WriteAllText(Path.Combine(outputFolder, "parkinglots.json"), Newtonsoft.Json.JsonConvert.SerializeObject(geoJson, Formatting.Indented));
+            Console.WriteLine("Writing JSON 'parkinglots.json' file...");            
+            File.WriteAllText(Path.Combine(outputFolder, "publicParkingLots.json"), Newtonsoft.Json.JsonConvert.SerializeObject(geoJsonPublicLots, Formatting.Indented));
+            File.WriteAllText(Path.Combine(outputFolder, "privateParkingLots.json"), Newtonsoft.Json.JsonConvert.SerializeObject(geoJsonPrivateLots, Formatting.Indented));
                 
             #endregion
 
@@ -204,11 +340,20 @@ namespace pl
             website = website.Replace("{AVGLON}", ((minLongitude + maxLongitude) / 2).ToString());
 
 
-            string websiteStatic = website.Replace("{DATALIST}", "pl.addData(" + geoJsonString + ");\r\n");
+            string websiteStatic = website.Replace("{DATALIST}", 
+@"publicParkingLots.addData(" + Newtonsoft.Json.JsonConvert.SerializeObject(geoJsonPublicLots) + @");
+ privateParkingLots.addData(" + Newtonsoft.Json.JsonConvert.SerializeObject(geoJsonPrivateLots) + @");
+");
+
             string websiteDynamic = website.Replace("{DATALIST}",
-@"             fetch('parkinglots.json')
+@"             fetch('publicParkingLots.json')
                 .then(response => response.json())
-                .then(data => taxLevel.addData(data))
+                .then(data => publicParkingLots.addData(data))
+                .catch(error => console.error('Error loading GeoJSON file:', error));
+
+             fetch('privateParkingLots.json')
+                .then(response => response.json())
+                .then(data => privateParkingLots.addData(data))
                 .catch(error => console.error('Error loading GeoJSON file:', error));"
 );
 
@@ -223,6 +368,6 @@ namespace pl
 
             Console.WriteLine("Complete!");            
             }
-        }
+        
     }
 }

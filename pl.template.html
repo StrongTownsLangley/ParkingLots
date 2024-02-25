@@ -27,26 +27,35 @@
         }).addTo(map);
 
         // Load GeoJSON file
- 
-        var pl = [];
-
-            var pl = L.geoJSON(null, {
-                style: function(feature) {
-                    return {
-                        fillColor: 'red',
-                        weight: 0,
-                        opacity: 1,
-                        color: 'white',
-                        fillOpacity: 1
-                    };
-                }
-            });
+        var publicParkingLots = L.geoJSON(null, {
+            style: function(feature) {
+                return {
+                    fillColor: '#e9ab51',
+                    weight: 0,
+                    opacity: 1,
+                    color: 'white',
+                    fillOpacity: 1
+                };
+            }
+        });
+        var privateParkingLots = L.geoJSON(null, {
+            style: function(feature) {
+                return {
+                    fillColor: '#f77464',
+                    weight: 0,
+                    opacity: 1,
+                    color: 'white',
+                    fillOpacity: 1
+                };
+            }
+        });
 
 
         {DATALIST}
 
-        pl.addTo(map);
-        
+        publicParkingLots.addTo(map);
+        privateParkingLots.addTo(map);
+
 
     </script>
 </body>
