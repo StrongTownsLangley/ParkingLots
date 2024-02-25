@@ -77,7 +77,11 @@ This tool was programmed by James Hansen (james@strongtownslangley.org)
 
 The project is a Visual Studio 2013 project in C# .NET 4.5.
 
+## Help
+
 If you encounter any issues while using it or have suggestions for improvement, please [open an issue](https://github.com/StrongTownsLangley/ParkingLots/issues) on the GitHub repository. Pull requests are also welcome.
+
+I can be found on Strong Towns Local Conversation discord, you can also get help in the #🧮do-the-math channel on the Strong Towns Langley discord: https://discord.gg/MuAn3cFd8J
 
 ## License
 
